@@ -38,15 +38,11 @@ try:
   print("Header loaded")
 except Exception:
   for idx,x in enumerate(glob.iglob(os.path.join(fruit_dir,os.path.join('Training','*')))):
-    # if idx > MaxTrainNum:
-    #   break
     training_set_size += len(glob.glob(os.path.join(x,'*.jpg')))
     class_id[x.split('\\')[-1]] = idx
     class_name[idx] = x.split('\\')[-1]
 
   for idx,x in enumerate(glob.iglob(os.path.join(fruit_dir,os.path.join('Test','*')))):
-    # if idx > MaxTestNum:
-    #   break
     test_set_size += len(glob.glob(os.path.join(x,'*.jpg')))
 
   with open('header.pkdat', 'wb') as file:
@@ -135,9 +131,10 @@ def show_sample():
 epochs   = 50
 batchsize= 60
 
-x_train  = x_train / 255
-x_test   = x_test / 255
+# x_train  = x_train / 255
+# x_test   = x_test / 255
 
+print(x_train.shape, x_test.shape, len(class_id), len(class_name))
 print("Spliting training samples")
 x_train0, x_val, train0_label, val_label = train_test_split(x_train, training_label, test_size=0.1, random_state=303, shuffle=False)
 
@@ -156,6 +153,8 @@ y_test   = to_categorical(test_label)
 datagen = ImageDataGenerator(vertical_flip=True,horizontal_flip=True)
 
 def define_network_architecture_5x5():
+  print('-'*10)
+  print("5x5:")
   model = Sequential()
   model.add(Conv2D(16,(5,5),strides=(1,1),input_shape=(100,100,4),padding='same',activation='relu'))
   model.add(MaxPooling2D(pool_size=(2,2)))
@@ -200,23 +199,25 @@ def train_model_5x5():
 
 
 def define_network_architecture_3x3():
+  print('-'*10)
+  print("3x3:")
   data = Input(shape=(100,100,4))
   x1   = Conv2D(8,(3,3),strides=(1,1),padding='same',activation='relu')(data)
   x2   = Conv2D(8,(3,3),strides=(1,1),padding='same',activation='relu')(x1)
   z    = Concatenate()([x1,x2])
   z    = MaxPooling2D(pool_size=(2,2))(z)
   
-  x3   = Conv2D(16,(3,3),strides=(1,1),padding='same',activation='relu')(data)
+  x3   = Conv2D(16,(3,3),strides=(1,1),padding='same',activation='relu')(z)
   x4   = Conv2D(16,(3,3),strides=(1,1),padding='same',activation='relu')(x3)
   z    = Concatenate()([x3,x4])
   z    = MaxPooling2D(pool_size=(2,2))(z)
   
-  x5   = Conv2D(32,(3,3),strides=(1,1),padding='same',activation='relu')(data)
+  x5   = Conv2D(32,(3,3),strides=(1,1),padding='same',activation='relu')(z)
   x6   = Conv2D(32,(3,3),strides=(1,1),padding='same',activation='relu')(x5)
   z    = Concatenate()([x5,x6])
   z    = MaxPooling2D(pool_size=(2,2))(z)
 
-  x7   = Conv2D(64,(3,3),strides=(1,1),padding='same',activation='relu')(data)
+  x7   = Conv2D(64,(3,3),strides=(1,1),padding='same',activation='relu')(z)
   x8   = Conv2D(64,(3,3),strides=(1,1),padding='same',activation='relu')(x7)
   z    = Concatenate()([x7,x8])
   z    = MaxPooling2D(pool_size=(2,2))(z)
@@ -252,6 +253,8 @@ def train_model_3x3():
   plt.legend()
   plt.show()
 
+train_model_3x3()
+train_model_5x5()
 scores_5x5 = model_5x5.evaluate(x_test,y_test)
 scores_3x3 = model_3x3.evaluate(x_test,y_test)
 print('accuracy 5x5:{:.4f}, 3x3:{:.4f}'.format(scores_5x5[1],scores_3x3[1]))
